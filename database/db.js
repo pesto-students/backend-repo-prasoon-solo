@@ -1,28 +1,12 @@
 // app.js
-import postgres from 'postgres';
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 
-import { configDotenv } from 'dotenv';
-configDotenv();
-
-let { PGHOST, PGDATABASE, PGUSER, PGPASSWORD, ENDPOINT_ID } = process.env;
-
-const sql = postgres({
-  host: PGHOST,
-  database: PGDATABASE,
-  username: PGUSER,
-  password: PGPASSWORD,
-  port: 5432,
-  ssl: 'require',
-  connection: {
-    options: `project=${ENDPOINT_ID}`,
-  },
-});
-
-async function getPgVersion() {
-  const result = await sql`select version()`;
-  console.log(result);
+const showDBConnection = async () => {
+  await prisma.$connect();
+  console.log('===========db connected==========')
+  await prisma.$disconnect()
 }
 
-getPgVersion();
-
-export {sql}
+showDBConnection()
+export { prisma}

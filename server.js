@@ -4,26 +4,21 @@ import { configDotenv } from 'dotenv';
 import * as bcrypt from 'bcrypt';
 import validator from 'validator';
 import jwt from 'jsonwebtoken';
+import { PrismaClient } from '@prisma/client';
+import {z} from 'zod';
+
+
+const prisma = new PrismaClient();
 
 import authRouter from './routes/authRoutes.js';
+import {validatorMiddleware} from './middlewares/validator.js';
+import { loginUserSchema, signupUserSchema } from './validators/authValidators.js';
+import problemRouter from './routes/problemRoutes.js';
 
 const app = express();
 configDotenv();
 app.use(express.json());
-let { PGHOST, PGDATABASE, PGUSER, PGPASSWORD, ENDPOINT_ID } = process.env;
-PGPASSWORD = decodeURIComponent(PGPASSWORD);
 
-const sql = postgres({
-  host: PGHOST,
-  database: PGDATABASE,
-  username: PGUSER,
-  password: PGPASSWORD,
-  port: 5432,
-  ssl: 'require',
-  connection: {
-    options: `project=${ENDPOINT_ID}`,
-  },
-});
 
 const PROBLEMS = [
   {
@@ -33,78 +28,56 @@ const PROBLEMS = [
     category: 'Array',
     order: 1,
     videoId: 'sdsdsds',
+    problemStatement: {
+      para1:'first para',
+      para2:'first para',
+      para3:'first para',
+      para4:'first para',
+    },
+    problemPoints:{
+      point1:'this is point 1',
+      point2:'this is point 2',
+      point3:'this is point 3',
+      point4:'this is point 4',
+    },
+    allExamples: {
+      example1: {
+        id: 1,
+        imageUrl: 'sdsdsd',
+        inputText: 'nums = [2,7,11,15], target = 9',
+        outputText: '[0,1]',
+        explanation: 'Because nums[0] + nums[1] == 9, we return [0, 1].',
+      },
+      example2: {
+        id: 2,
+        imageUrl: 'sdsdsd',
+        inputText: 'nums = [3,2,4], target = 6',
+        outputText: '[1,2]',
+        explanation: 'Because nums[1] + nums[2] == 6, we return [1, 2].',
+      },
+      example3: {
+        id: 3,
+        imageUrl: 'sdsdsd',
+        inputText: ' nums = [3,3], target = 6',
+        outputText: '[0,1]',
+      },
+    },
+    allConstraints: {
+      constraint1: '<code>[0,5000]</code>',
+      constraint2: '<code>[0,5000]</code>',
+      constraint3: '<code>[0,5000]</code>',
+      constraint4: 'this will render as plain text not coded',
+      constraint5: '',
+    },
   },
 ];
+
 
 // all routes will be here
 
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/problems', problemRouter);
 
-
-
-
-const login = async (req, res) => {
-  try {
-    var { email, password } = req.body;
-    if (!validator.isEmail(email)) res.json({ message: 'Email not valid' });
-    else if (!validator.isLength(password, { min: 6 }))
-      res.json({ message: 'Password must be 6 character long' });
-    else {
-      const [result] = await sql`SELECT * from users WHERE email = ${email}`;
-      console.log('result=>', result);
-      const isPasswordMatch = bcrypt.compare(password, result.password);
-      if (!isPasswordMatch) res.json({ message: 'Password doesnt match' });
-      else {
-        const accessToken = jwt.sign(
-          { id: result.id },
-          process.env.JWT_SECRET,
-          { expiresIn: '14m' }
-        );
-        const refreshToken = jwt.sign(
-          { id: result.id },
-          process.env.JWT_SECRET,
-          { expiresIn: '30d' }
-        );
-        res.json({ accessToken, refreshToken, email });
-      }
-    }
-  } catch (e) {
-    console.log('e', e);
-    res.status(500).json({ message: 'Something went wrong' });
-  }
-};
-app.post('/login', login);
-
-app.get('/users', async (req, res) => {
-  const result = await sql`SELECT * FROM users`;
-  res.json(result);
-});
-
-const signup = async (req, res, next) => {
-  try {
-    const { email, password, fullname } = req.body;
-    if (!validator.isEmail(email)) res.json({ message: 'Email not valid' });
-    else if (!validator.isLength(fullname, { min: 6 }))
-      res.json({ message: 'Full name must be 6 characters' });
-    else if (!validator.isLength(password, { min: 6 }))
-      res.json({ message: 'Password must be 6 character long' });
-    else {
-      const salt = await bcrypt.genSalt();
-      const passwordHash = await bcrypt.hash(password, salt);
-      await sql`INSERT INTO users(fullname,email,password) VALUES(${fullname},${email},${passwordHash})`;
-      next();
-    }
-  } catch (e) {
-    res.status(500).json({ message: 'Something went wrong' });
-  }
-};
-
-app.post('/signup', signup, login);
-
-app.get('/allproblems', async (req, res) => {
-  const result = await sql`SELECT * from problems`;
-  res.json(result);
-});
 
 app.post('/addProblem', async (req, res) => {
   try {
@@ -139,16 +112,16 @@ app.post('/addProblem', async (req, res) => {
 
 app.post('/problem', async (req, res) => {
   try {
-  const { id } = req.body;
-  if(typeof(id) === 'number') {
-    const [result] = await sql`SELECT * from problems WHERE id = ${id}`;
-    res.json(result);
-  } else {
-    res.json({message:'problem id must be a number'})
-  }
+    const { id } = req.body;
+    if (typeof id === 'number') {
+      const [result] = await sql`SELECT * from problems WHERE id = ${id}`;
+      res.json(result);
+    } else {
+      res.json({ message: 'problem id must be a number' });
+    }
   } catch (error) {
-    console.log('error', error)
-    res.json({message:'Something went wrong'})
+    console.log('error', error);
+    res.json({ message: 'Something went wrong' });
   }
 });
 
@@ -157,10 +130,41 @@ app.get('/', async (req, res) => {
   console.log('result=>', result);
   res.json(result);
 });
+app.get('/allemployees', async (req, res) => {
+  try {
+    await prisma.$connect();
+    const allemployees = await prisma.employee.findMany({
+      where: { name: 'prasoon' },
+    });
+    res.json(allemployees);
+  } catch (error) {
+    console.log('error', error);
+    res.json({ message: 'Somthing went wrong' });
+    await prisma.$disconnect();
+  }
+});
+app.post('/prismaemployee', async (req, res) => {
+  try {
+    await prisma.$connect();
+    const user = await prisma.employee.create({
+      data: {
+        name: 'prasoon',
+        email: 'chatterjeeprasoon@gmail.com',
+        role: 'INTERN',
+      },
+    });
+    res.json(user);
+    await prisma.$disconnect();
+  } catch (error) {
+    console.log('error=>', error);
+    res.json({ message: 'Somthing went wrong' });
+    await prisma.$disconnect();
+  }
+});
 
-app.use('*',(req,res,next)=>{
-  res.status(404).json({message:'Request not found'})
-})
+app.use('*', (req, res, next) => {
+  res.status(404).json({ message: 'Request not found' });
+});
 
 app.listen(8080, () => {
   console.log('server running in port 8080');
