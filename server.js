@@ -6,7 +6,7 @@ import validator from 'validator';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import {z} from 'zod';
-
+import cors from 'cors'
 
 const prisma = new PrismaClient();
 
@@ -74,9 +74,15 @@ const PROBLEMS = [
 
 
 // all routes will be here
-
+app.use(cors());
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/problems', problemRouter);
+
+app.use((error,req,res,next)=>{
+  error.statusCode = error.statusCode || 500;
+  error.message = error.message || 'Somthing went wrong';
+  res.status(error.statusCode).json({message:error.message})
+})
 
 
 app.post('/addProblem', async (req, res) => {

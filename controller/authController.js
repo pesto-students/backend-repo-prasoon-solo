@@ -13,10 +13,10 @@ const signup = async (req, res, next) => {
       data: { email, fullName, role, password: passwordHash },
     });
     await prisma.$disconnect();
-    res.json(result);
-  } catch (e) {
-    console.log('e=>>>', e);
-    res.status(500).json({ message: 'Something went wrong' });
+    next()
+  } catch (error) {
+    console.log('error=>>>', error);
+    next(error)
   }
 };
 
@@ -36,9 +36,9 @@ const login = async (req, res, next) => {
       });
       res.json({ accessToken, refreshToken, email });
     }
-  } catch (e) {
-    console.log('e==>', e);
-    res.status(500).json({ message: 'Something went wrong' });
+  } catch (error) {
+    console.log('error==>', error);
+    next(error)
   }
 };
 

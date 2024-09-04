@@ -9,7 +9,7 @@ import {
 const router = Router();
 
 router.post(
-  '/signup',
+  '/register',
   validatorMiddleware(signupUserSchema),
   signup,
   validatorMiddleware(loginUserSchema),

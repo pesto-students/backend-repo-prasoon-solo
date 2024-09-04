@@ -21,4 +21,18 @@ const addProblem = async (req, res, next) => {
   }
 };
 
-export { addProblem };
+const allProblems = async (req,res,next) => {
+  try {
+    await prisma.$connect()
+    const result = await prisma.problem.findMany();
+    res.json(result);
+    await prisma.$disconnect()
+  } catch (error) {
+    console.log('error', error)
+    res.status(500).json({ message: 'Something went wrong' });
+
+  }
+  
+}
+
+export { addProblem , allProblems};

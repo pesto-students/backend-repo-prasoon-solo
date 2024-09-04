@@ -30,7 +30,7 @@ model User {
   fullName  String
   email     String      @unique
   password  String
-  role      AccountRole
+  role      AccountRole @default(USER)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 }
@@ -40,6 +40,50 @@ model Problem {
   title      String
   difficulty DifficultyLevel
   category   String
-  order      Int
+  order      Int  @unique
   videoId    String?
+  examples   Examples[]
+  problemParasStatement  ProblemParaStatement?
+  constraint ProblemConstraint?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model Examples {
+  id  Int @id @default(autoincrement())
+  imageUrl String?
+  inputText String
+  outputText String
+  explanation String?
+  problemId Int
+  problem Problem @relation(fields: [problemId], references: [id])
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+
+model ProblemParaStatement {
+  id Int @id @default(autoincrement())
+  paraOne String
+  paraTwo String?
+  paraThree String?
+  paraFour String?
+  paraFive String?
+  problemId Int @unique
+  problem Problem @relation(fields: [problemId],references: [id])
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model ProblemConstraint {
+  id Int @id @default(autoincrement())
+  problemId Int @unique
+  problem Problem @relation(fields: [problemId],references: [id])
+  constraintOne String
+  constraintTwo String?
+  constraintThree String?
+  constraintFour String?
+  constraintFive String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 }
