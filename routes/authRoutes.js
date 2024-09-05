@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { login, signup } from '../controller/authController.js';
+import { login, signup , refreshAccessToken} from '../controller/authController.js';
 import { validatorMiddleware } from '../middlewares/validator.js';
 import {
   loginUserSchema,
+  refreshAccessTokenSchema,
   signupUserSchema,
 } from '../validators/authValidators.js';
 
@@ -17,5 +18,7 @@ router.post(
 );
 
 router.post('/login', validatorMiddleware(loginUserSchema), login);
+router.post('/refreshAccessToken', validatorMiddleware(refreshAccessTokenSchema),refreshAccessToken);
+
 
 export default router;

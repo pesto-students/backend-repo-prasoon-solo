@@ -15,7 +15,6 @@ const signup = async (req, res, next) => {
     await prisma.$disconnect();
     next()
   } catch (error) {
-    console.log('error=>>>', error);
     next(error)
   }
 };
@@ -28,18 +27,27 @@ const login = async (req, res, next) => {
     const isPasswordMatch = bcrypt.compare(password, result.password);
     if (!isPasswordMatch) res.json({ message: 'Password doesnt match' });
     else {
-      const accessToken = jwt.sign({ id: result.id }, process.env.JWT_SECRET, {
-        expiresIn: '14m',
+      const accessToken = jwt.sign(result, process.env.JWT_SECRET, {
+        expiresIn: '1d',
       });
-      const refreshToken = jwt.sign({ id: result.id }, process.env.JWT_SECRET, {
+      const refreshToken = jwt.sign(result, process.env.JWT_SECRET, {
         expiresIn: '30d',
       });
       res.json({ accessToken, refreshToken, email });
     }
   } catch (error) {
-    console.log('error==>', error);
     next(error)
   }
 };
 
-export { signup, login };
+const refreshAccessToken = async (req,res,next) => {
+  try {
+    const {refreshToken} = req.body;
+    const decodedRefreshToken = jwt.verify(refreshToken,process.env.JWT_SECRET);
+    const newAccessToken = jwt.sign(decodedRefreshToken,process.env.JWT_SECRET);
+    res.json(newAccessToken);
+  } catch (error) {
+    next(error)
+  }
+}
+export { signup, login , refreshAccessToken};
