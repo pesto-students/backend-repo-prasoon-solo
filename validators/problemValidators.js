@@ -9,10 +9,10 @@ const problemSchema = z.object({
   category: z
     .string({ required_error: 'Category cannot be empty.' })
     .trim()
-    .min(5, { message: 'Category must be atleast 6 characters long.' })
+    .min(5, { message: 'Category must be atleast 5 characters long.' })
     .max(25, { message: 'Category cannot be more than 25 characters.' }),
   order: z.number({ required_error: 'Order cannot be empty.' }),
-  videoId: z.string().trim(),
+  videoUrl: z.string().trim().optional(),
   difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']),
 });
 

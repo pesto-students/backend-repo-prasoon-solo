@@ -13,9 +13,9 @@ const signup = async (req, res, next) => {
       data: { email, fullName, role, password: passwordHash },
     });
     await prisma.$disconnect();
-    next()
+    next();
   } catch (error) {
-    next(error)
+    next(error);
   }
 };
 
@@ -23,31 +23,39 @@ const login = async (req, res, next) => {
   try {
     var { email, password } = req.body;
     await prisma.$connect();
-    const result = await prisma.user.findUniqueOrThrow({ where: { email } });
-    const isPasswordMatch = bcrypt.compare(password, result.password);
+    const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+    const isPasswordMatch = bcrypt.compare(password, user.password);
     if (!isPasswordMatch) res.json({ message: 'Password doesnt match' });
     else {
-      const accessToken = jwt.sign(result, process.env.JWT_SECRET, {
-        expiresIn: '1d',
+      const accessToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+        expiresIn: '1h',
       });
-      const refreshToken = jwt.sign(result, process.env.JWT_SECRET, {
+      const refreshToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
         expiresIn: '30d',
       });
-      res.json({ accessToken, refreshToken, email });
+      delete user.password;
+      res.json({ accessToken, refreshToken, user });
     }
   } catch (error) {
-    next(error)
+    console.log('error-------', error);
+    next(error);
   }
 };
 
-const refreshAccessToken = async (req,res,next) => {
+const refreshAccessToken = async (req, res, next) => {
   try {
-    const {refreshToken} = req.body;
-    const decodedRefreshToken = jwt.verify(refreshToken,process.env.JWT_SECRET);
-    const newAccessToken = jwt.sign(decodedRefreshToken,process.env.JWT_SECRET);
+    const { refreshToken } = req.body;
+    const decodedRefreshToken = jwt.verify(
+      refreshToken,
+      process.env.JWT_SECRET
+    );
+    const newAccessToken = jwt.sign(
+      decodedRefreshToken,
+      process.env.JWT_SECRET
+    );
     res.json(newAccessToken);
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
-export { signup, login , refreshAccessToken};
+};
+export { signup, login, refreshAccessToken };

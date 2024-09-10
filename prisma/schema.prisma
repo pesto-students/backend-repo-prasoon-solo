@@ -25,6 +25,12 @@ enum DifficultyLevel {
   HARD
 }
 
+enum TestCaseNum {
+  CASE1
+  CASE2
+  CASE3
+}
+
 model User {
   id        Int         @id @default(autoincrement())
   fullName  String
@@ -43,10 +49,13 @@ model Problem {
   order      Int  @unique
   videoId    String?
   examples   Examples[]
-  problemParasStatement  ProblemParaStatement?
-  constraint ProblemConstraint?
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+  constraintId Int? @unique
+  paraStatementId Int? @unique
+  examplesIds Int[]
+  ProblemParaStatement ProblemParaStatement?
+  ProblemConstraint ProblemConstraint?
 }
 
 model Examples {
@@ -59,6 +68,7 @@ model Examples {
   problem Problem @relation(fields: [problemId], references: [id])
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+  case  TestCaseNum
 }
 
 
