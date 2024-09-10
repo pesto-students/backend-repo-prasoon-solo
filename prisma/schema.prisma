@@ -1,0 +1,99 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountRole {
+  USER
+  ADMIN
+  SUPERADMIN
+}
+
+enum DifficultyLevel {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum TestCaseNum {
+  CASE1
+  CASE2
+  CASE3
+}
+
+model User {
+  id        Int         @id @default(autoincrement())
+  fullName  String
+  email     String      @unique
+  password  String
+  role      AccountRole @default(USER)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model Problem {
+  id         Int             @id @default(autoincrement())
+  title      String
+  difficulty DifficultyLevel
+  category   String
+  order      Int  @unique
+  videoId    String?
+  examples   Examples[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  constraintId Int? @unique
+  paraStatementId Int? @unique
+  examplesIds Int[]
+  ProblemParaStatement ProblemParaStatement?
+  ProblemConstraint ProblemConstraint?
+}
+
+model Examples {
+  id  Int @id @default(autoincrement())
+  imageUrl String?
+  inputText String
+  outputText String
+  explanation String?
+  problemId Int
+  problem Problem @relation(fields: [problemId], references: [id])
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  case  TestCaseNum
+}
+
+
+model ProblemParaStatement {
+  id Int @id @default(autoincrement())
+  paraOne String
+  paraTwo String?
+  paraThree String?
+  paraFour String?
+  paraFive String?
+  problemId Int @unique
+  problem Problem @relation(fields: [problemId],references: [id])
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model ProblemConstraint {
+  id Int @id @default(autoincrement())
+  problemId Int @unique
+  problem Problem @relation(fields: [problemId],references: [id])
+  constraintOne String
+  constraintTwo String?
+  constraintThree String?
+  constraintFour String?
+  constraintFive String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
